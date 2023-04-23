@@ -1,0 +1,12 @@
+# Case-by-Case-method
+import math
+import numpy as np
+def Rot(φ):
+  rad = math.radians(φ)
+  return np.array([[math.cos(rad), -math.sin(rad)], [math.sin(rad), math.cos(rad)]])
+
+def angle(a, x, y, φ):
+    a1 = Rot(φ) @ np.array([[a[0] - x], [a[1] - y]])
+    return math.atan2(a1[1], a1[0])
+# 교점 a=(a1,a2)와 중심의 x좌표, y좌표 시계방향으로 기울어진 정도를 넣어 기준 축에서 교점까지의 각을 구할 수 있다.
+# (-pi,pi] 범위 안의 값을 반환한다.
