@@ -112,4 +112,4 @@ def area_seg(a, b, E):
 if len(Eq_real) == 4:
     #####CASE 8########################################################################
     E = sort_angle(Eq_real)
-    Result = min(area_seg(E[0], E[1], E_1), area_seg(E[0], E[1], E_2)) + min(area_seg(E[1], E[2], E_1), area_seg(E[1], E[2], E_2)) + min(area_seg(E[2], E[3], E_1), area_seg(E[2], E[3], E_2)) + min(area_seg(E[3], E[0], E_1), area_seg(E[3], E[0], E_2)) + abs(E[0][0]*E[1][1] + E[1][0]*E[2][1] + E[2][0]*E[3][1] + E[3][0]*E[0][1] - E[1][0]*E[0][1] - E[2][0]*E[1][1] - E[3][0]*E[2][1] - E[0][0]*E[3][1])
+    Result = min(area_seg(E[0], E[1], E_1), area_seg(E[0], E[1], E_2)) + min(area_seg(E[1], E[2], E_1), area_seg(E[1], E[2], E_2)) + min(area_seg(E[2], E[3], E_1), area_seg(E[2], E[3], E_2)) + min(area_seg(E[3], E[0], E_1), area_seg(E[3], E[0], E_2)) + abs(E[0][0]*E[1][1] + E[1][0]*E[2][1] + E[2][0]*E[3][1] + E[3][0]*E[0][1] - E[1][0]*E[0][1] - E[2][0]*E[1][1] - E[3][0]*E[2][1] - E[0][0]*E[3][1]) / 2
