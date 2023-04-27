@@ -80,40 +80,4 @@ def area_seg_2(a, b):
 if len(Eq_real) == 3:
     Result = min(area_seg_1(0,1), area_seg_2(0,1)) + min(area_seg_1(1,2), area_seg_2(1,2)) + min(area_seg_1(2,0), area_seg_2(2,0)) + tri(Eq_real[0],Eq_real[1], Eq_real[2])
     print(Result)
-else: print("error", len(Eq_real))
-    
-    
-    
-        
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+else: print("error")
