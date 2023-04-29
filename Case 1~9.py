@@ -64,7 +64,7 @@ A_1 = float(input("x 반지름 :"))
 B_1 = float(input("y 반지름 :"))
 mx_1 = float(input("중심 x 좌표 :"))
 my_1 = float(input("중심 y 좌표 :"))
-φ_1 = float(input("(시계 방향)회전각(°) :"))
+φ_1 = float(input("(반시계 방향)회전각(°) :"))
 
 x, y = sy.symbols("x y")
 #x, y 를 연산 가능한 기호로 선언
