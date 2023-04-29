@@ -82,7 +82,7 @@ A_2 = float(input("x 반지름 :"))
 B_2 = float(input("y 반지름 :"))
 mx_2 = float(input("중심 x 좌표 :"))
 my_2 = float(input("중심 y 좌표 :"))
-φ_2 = float(input("(시계 방향)회전각(°) :"))
+φ_2 = float(input("(반시계 방향)회전각(°) :"))
 
 b = Rot(φ_2) @ np.array([[x - mx_2], [y-my_2]])
 #변환
