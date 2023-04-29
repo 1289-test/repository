@@ -119,7 +119,7 @@ if E1 == E2:
 else:
     if len(Eq_real) == 0:
         ###Case 1###
-        if E1.lhs.subs([(x, mx_2), (y, my_2)]) < 0 or E2.lhs.subs([(x, mx_1), (y, mx_2)]) < 0: #타원 중심이 다른 타원 내부에 있는가?
+        if E1.lhs.subs([(x, mx_2), (y, my_2)]) < 0 or E2.lhs.subs([(x, mx_1), (y, my_1)]) < 0: #타원 중심이 다른 타원 내부에 있는가?
             Result = min(A_1 * B_1 * math.pi, A_2 * B_2 * math.pi)  #min E1, E2 return
             
         ###Case 2###
@@ -128,7 +128,7 @@ else:
 
     elif len(Eq_real) == 1:
         ###Case 3###
-        if E1.lhs.subs([(x, mx_2), (y, my_2)]) < 0 or E2.lhs.subs([(x, mx_1), (y, mx_2)]) < 0: #타원 중심이 다른 타원 내부에 있는가?
+        if E1.lhs.subs([(x, mx_2), (y, my_2)]) < 0 or E2.lhs.subs([(x, mx_1), (y, my_1)]) < 0: #타원 중심이 다른 타원 내부에 있는가?
             Result = min(A_1 * B_1 * math.pi, A_2 * B_2 * math.pi)  #min E1, E2 return
 
         ###Case 4###
