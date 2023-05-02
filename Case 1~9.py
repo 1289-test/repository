@@ -143,7 +143,6 @@ else:
     elif len(Eq_real) == 3:
         ###Case 7###
         E=sort_angle(Eq_real)
-        E = [(2, 0), (0, 1), (-2, 0)]
         Result = min(area_seg(E[0],E[1],E_1), area_seg(E[0],E[1],E_2)) + \
         min(area_seg(E[1],E[2],E_1), area_seg(E[1],E[2],E_2))\
             + min(area_seg(E[2],E[0],E_1), area_seg(E[2],E[0],E_2)) + \
