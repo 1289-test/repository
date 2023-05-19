@@ -1,0 +1,417 @@
+import tkinter as tk
+import random
+import math
+import numpy as np
+import sympy as sy
+import sys
+import os
+import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+
+###############((plotting function))################
+
+def plot_ellipses_by_module():
+    a1 = float(entryA_1.get())
+    b1 = float(entryB_1.get())
+    x1 = float(entrymx_1.get())
+    y1 = float(entrymy_1.get())
+    theta1 = float(entryφ_1.get())
+    a2 = float(entryA_2.get())
+    b2 = float(entryB_2.get())
+    x2 = float(entrymx_2.get())
+    y2 = float(entrymy_2.get())
+    theta2 = float(entryφ_2.get())
+
+    fig, ax = plt.subplots(figsize = (5, 5), facecolor = '#ececec')
+
+    # 첫번째 타원 생성
+    ellipse1 = Ellipse(xy=(float(x1), float(y1)), width=float(a1)*2, height=float(b1)*2, angle=float(theta1))
+    ellipse1.set_alpha(0.2) # 타원 내부의 투명도 = 0.2로 설정
+    ellipse1.set_facecolor('green')
+    ellipse1.set_edgecolor('green')
+    ellipse1.set_linewidth(0.5)
+    ax.add_patch(ellipse1) # 생성된 타원을 그래프에 add
+
+    # 두번째 타원 생성
+    ellipse2 = Ellipse(xy=(float(x2), float(y2)), width=float(a2)*2, height=float(b2)*2, angle=float(theta2))
+    ellipse2.set_alpha(0.2) # 타원 내부의 투명도 = 0.2로 설정
+    ellipse2.set_facecolor('green')
+    ellipse2.set_edgecolor('green')
+    ellipse2.set_linewidth(0.5)
+    ax.add_patch(ellipse2) # 생성된 타원을 그래프에 add
+
+    plt.axis('auto')              # 자동으로 생성된 두 타원이 모두 그려지도록 x축과 y축의 범위 결정
+    plt.gca().set_aspect('equal')
+    plt.xticks(fontsize=5)
+    plt.yticks(fontsize=5)
+    ax.spines['top'].set_linewidth(0.5)
+    ax.spines['left'].set_linewidth(0.5)
+    ax.spines['right'].set_linewidth(0.5)
+    ax.spines['bottom'].set_linewidth(0.5)
+
+    canvas = FigureCanvasTkAgg(fig, master = frame_pic)
+    canvas.draw()
+    canvas.get_tk_widget().pack(anchor = 'nw')
+
+
+###############((ellipse set function))################
+def set_ellipse(a, b, x0, y0, theta):
+    t = np.linspace(0, 2*np.pi, 1000)
+    ellipse = np.array([a*np.cos(t), b*np.sin(t)]) # x축의 반지름 : a, y축의 반지름 : b인 타원 생성
+    rotation_matrix = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]]) # theta만큼 회전시키는 회전 변환 
+    rotated_ellipse = rotation_matrix @ ellipse # theta값 만큼 타원 회전
+    x = rotated_ellipse[0,:] + x0 # x축 방향으로 x0만큼 평행이동(중심 x 좌표 : x0)
+    y = rotated_ellipse[1,:] + y0 # y축 방향으로 y0만큼 평행이동(중심 y 좌표 : y0)
+    min_x=min(x) # 그래프의 x, y축의 범위 설정/ 몬테카를로 난수 생성 범위를 위해 타원의 x와 y값들의 최솟값과 최댓값을 각각 구함
+    max_x=max(x)
+    min_y=min(y)
+    max_y=max(y)
+    return [min_x, max_x, min_y, max_y]
+
+###############((area function with monte-))################
+def area_of_overlap_without_plot(a1, b1, x1, y1, theta1, a2, b2, x2, y2, theta2, num_samples=1000):
+
+    # theta 값들을 degree 값에서 radian 값으로 변환
+    theta1=theta1*np.pi/180
+    theta2=theta2*np.pi/180
+
+    # 두 타원 생성 및 plot
+    e1=set_ellipse(a1, b1, x1, y1, theta1)
+    e2=set_ellipse(a2, b2, x2, y2, theta2)
+    
+    # 몬테카를로 시뮬레이션 시행 시 타원의 겹치는 부분에 속하는 점의 갯수
+    count = 0
+
+    # 몬테카를로 시뮬레이션 시행
+    for i in range(num_samples):
+
+        # 두 타원을 모두 포함하는 범위 내의 무작위 점 생성
+        x = random.uniform(min(e1[0],e2[0]), max(e1[1],e2[1]))
+        y = random.uniform(min(e1[2],e2[2]), max(e1[3],e2[3]))
+
+        # rotated된 타원의 내부에 속하는 여부를 판단하기 어려움 => 생성된 점을 회전변환하기 전의 타원의 내부에 속하는지를 판단하기 위해서 생성된 점을 -theat만큼 회전
+        x1_new = (x - x1) * math.cos(-theta1) - (y - y1) * math.sin(-theta1) + x1
+        y1_new = (y - y1) * math.cos(-theta1) + (x - x1) * math.sin(-theta1) + y1
+
+        x2_new = (x - x2) * math.cos(-theta2) - (y - y2) * math.sin(-theta2) + x2
+        y2_new = (y - y2) * math.cos(-theta2) + (x - x2) * math.sin(-theta2) + y2
+
+
+        if ((x1_new-x1)**2/a1**2 + (y1_new-y1)**2/b1**2 <= 1) and ((x2_new-x2)**2/a2**2 + (y2_new-y2)**2/b2**2 <= 1): # 생성된 점이 두 타원의 내부에 속할 때
+            count += 1
+
+
+    return (count/num_samples)*(max(e1[1],e2[1])-min(e1[0],e2[0]))*(max(e1[3],e2[3])-min(e1[2],e2[2])) # 타원의 겹치는 넓이 계산
+
+###############((prior function for cbc))################
+def Rot(φ):
+    rad = math.radians(φ)
+    return np.array([[math.cos(rad), -math.sin(rad)], [math.sin(rad), math.cos(rad)]])
+#회전변환 행렬
+def angle(a, x, y, φ):
+    a1 = Rot(-φ) @ np.array([[a[0] - x], [a[1] - y]])
+    if math.atan2(a1[1], a1[0]) < 0:
+        return math.atan2(a1[1], a1[0]) + 2 * math.pi
+    else:
+        return math.atan2(a1[1], a1[0])
+# 교점 a=(a1,a2)와 중심의 x좌표, y좌표 반시계방향으로 기울어진 정도를 넣어
+# 기준 축에서 교점까지의 각을 구할 수 있다.
+
+def f(φ, A, B):
+    if φ == math.pi / 2 or φ == 3 * math.pi / 2:
+        return φ
+    elif 0 <= φ < math.pi / 2:
+        return math.atan(A * math.tan(φ) / B)
+    elif math.pi / 2 < φ <= math.pi:
+        return math.atan(A * math.tan(φ) / B) + math.pi
+    elif math.pi < φ < 3 * math.pi / 2:
+        return math.atan(A * math.tan(φ) / B) + math.pi
+    elif 3 * math.pi / 2 < φ <= 2 * math.pi:
+        return math.atan(A * math.tan(φ) / B) + 2 * math.pi
+    
+def ESA(φ_1, φ_2, A, B):
+    return A * B * (f(φ_2, A, B) - f(φ_1, A, B))/ 2
+#중심이 중점인 타원부채꼴 넓이
+
+def area_tri(a, b, mx, my):
+    return abs((a[0] - mx) * (b[1] - my) - (b[0] - mx) * (a[1] - my)) / 2    
+# 두 교점과 타원의 중심의 좌표를 넣으면 세 점이 이루는 삼각형의 넓이를 반환함
+
+def area_seg(a, b, E):
+    if ESA(angle(a, E[2], E[3], E[4]), angle(b, E[2], E[3], E[4]), E[0], E[1]) < 0:
+        if E[0] * E[1] * math.pi + ESA(angle(a, E[2], E[3], E[4]), angle(b, E[2], E[3], E[4]), E[0], E[1]) > E[0] * E[1] * math.pi / 2:
+            return E[0] * E[1] * math.pi + ESA(angle(a, E[2], E[3], E[4]), angle(b, E[2], E[3], E[4]), E[0], E[1]) + area_tri(a, b, E[2], E[3])
+        elif E[0] * E[1] * math.pi + ESA(angle(a, E[2], E[3], E[4]), angle(b, E[2], E[3], E[4]), E[0], E[1]) < E[0] * E[1] * math.pi / 2:
+            return E[0] * E[1] * math.pi + ESA(angle(a, E[2], E[3], E[4]), angle(b, E[2], E[3], E[4]), E[0], E[1]) - area_tri(a, b, E[2], E[3])
+        else: 
+            return E[0] * E[1] * math.pi / 2
+    elif ESA(angle(a, E[2], E[3], E[4]), angle(b, E[2], E[3], E[4]), E[0], E[1]) > E[0] * E[1] * math.pi / 2:
+        return ESA(angle(a, E[2], E[3], E[4]), angle(b, E[2], E[3], E[4]), E[0], E[1]) + area_tri(a, b, E[2], E[3])
+    elif ESA(angle(a, E[2], E[3], E[4]), angle(b, E[2], E[3], E[4]), E[0], E[1]) < E[0] * E[1] * math.pi / 2:
+        return ESA(angle(a, E[2], E[3], E[4]), angle(b, E[2], E[3], E[4]), E[0], E[1]) - area_tri(a, b, E[2], E[3])
+    else:
+        return E[0] * E[1] * math.pi / 2
+#두 교점의 좌표와 타원리스트를 넣으면 두 교점이 만드는 활꼴의 넓이를 반환함. (첫번째 교점에서 두번째 교점으로 반시계방향으로)
+
+def sort_angle(Eq_list, mx_1, my_1, φ_1):
+    for n in range(len(Eq_list)-1):
+        for m in range(n + 1, len(Eq_list)):
+            if angle(Eq_list[n], mx_1, my_1, φ_1) > angle(Eq_list[m], mx_1, my_1, φ_1):
+                Eq_list[n], Eq_list[m] = Eq_list[m], Eq_list[n]
+    return Eq_list
+#Eq_real을 각도 순으로 정렬 (첫번째 타원 기준)
+
+###############((area function with cbc))################
+def area(A_1, B_1, mx_1, my_1, φ_1, A_2, B_2, mx_2, my_2, φ_2):
+    x, y = sy.symbols("x y")
+    #x, y 를 연산 가능한 기호로 선언
+
+    a = Rot(-φ_1) @ np.array([[x - mx_1], [y-my_1]])
+    #변환
+
+    E1 = sy.Eq(((a[0][0])**2)/(A_1**2) + ((a[1][0])**2)/(B_1**2) - 1 , 0)
+    E_1 = [A_1, B_1, mx_1, my_1, φ_1]
+    #타원방정식 a는 행렬꼴, matrix[n+1번째 entry][0 = eq type] 
+
+    b = Rot(-φ_2) @ np.array([[x - mx_2], [y-my_2]])
+    #변환
+
+    E2 = sy.Eq(((b[0][0])**2)/(A_2**2) + ((b[1][0])**2)/(B_2**2) - 1, 0)
+    E_2 = [A_2, B_2, mx_2, my_2, φ_2]
+    #타원방정식
+
+    Eq = sy.solve((E1, E2), (x, y))
+    #두 타원의 교점 (x,y) 꼴 딕셔너리
+
+    if E1 == E2:
+        Eq = []
+
+    for i in range(len(Eq)):
+        Eq[i] = list(Eq[i])
+        for j in range(2):
+            if abs(sy.im(Eq[i][j])) < 0.0000000001:
+                Eq[i][j]= sy.re(Eq[i][j])
+    Eq_real = []
+    #일반적으로 앞서 x, y의 수 체계를 default 로 설정함
+    #sympy 모듈에서의 기호의 default 수 체계로 복소수를 취하므로 복소근을 삭제해야함 
+    #실근 리스트를 따로 만듦
+
+    for i in range(len(Eq)):
+        if Eq[i][0].is_real and Eq[i][1].is_real:
+            Eq_real.append(tuple(Eq[i]))
+        else:
+            pass
+    #전체 근 딕셔너리에서 x값이 실수이면 실근 딕셔너리에 추가
+
+    Eq_real = list(set(Eq_real))
+    #중복 삭제
+
+    #Eq_real, len(Eq_real)
+    #이로써 실근의 좌표와 개수를 알 수 있음.
+
+    if len(Eq_real) == 0:
+        ###Case 1###
+        if E1.lhs.subs([(x, mx_2), (y, my_2)]) < 0 or E2.lhs.subs([(x, mx_1), (y, my_1)]) < 0: #타원 중심이 다른 타원 내부에 있는가?
+            Result = min(A_1 * B_1 * math.pi, A_2 * B_2 * math.pi)  #min E1, E2 return
+
+        ###Case 2###
+        else:#포함관계가 없는 경우
+            Result = 0
+
+    elif len(Eq_real) == 1:
+        ###Case 3###
+        if E1.lhs.subs([(x, mx_2), (y, my_2)]) < 0 or E2.lhs.subs([(x, mx_1), (y, my_1)]) < 0: #타원 중심이 다른 타원 내부에 있는가?
+            Result = min(A_1 * B_1 * math.pi, A_2 * B_2 * math.pi)  #min E1, E2 return
+
+        ###Case 4###
+        else: Result = 0
+
+    elif len(Eq_real) == 2:
+        ###Case 5, 6###
+        if abs(Eq_real[0][0]-Eq_real[1][0])<0.0000000001 and abs(Eq_real[0][1]-Eq_real[1][1])<0.0000000001:
+            if E1.lhs.subs([(x, mx_2), (y, my_2)]) < 0 or E2.lhs.subs([(x, mx_1), (y, my_1)]) < 0: #타원 중심이 다른 타원 내부에 있는가?
+                Result = min(A_1 * B_1 * math.pi, A_2 * B_2 * math.pi)
+            else: Result = 0
+        else:
+            Result = min(area_seg(Eq_real[0], Eq_real[1], E_1), \
+                            area_seg(Eq_real[0], Eq_real[1], E_2)) +\
+                            min(area_seg(Eq_real[1], Eq_real[0], E_1), \
+                                area_seg(Eq_real[1], Eq_real[0], E_2))
+    elif len(Eq_real) == 3:
+        ###Case 7###
+        E=sort_angle(Eq_real, mx_1, my_1, φ_1)
+        Result = min(area_seg(E[0],E[1],E_1), area_seg(E[0],E[1],E_2)) + \
+        min(area_seg(E[1],E[2],E_1), area_seg(E[1],E[2],E_2))\
+            + min(area_seg(E[2],E[0],E_1), area_seg(E[2],E[0],E_2)) + \
+        abs((E[0][0] - E[2][0]) * (E[1][1] - E[2][1]) - (E[1][0] - E[2][0]) * (E[0][1] - E[2][1])) / 2
+
+    elif len(Eq_real) == 4:
+        ###CASE 8###
+        E = sort_angle(Eq_real, mx_1, my_1, φ_1)
+        Result = min(area_seg(E[0], E[1], E_1), area_seg(E[0], E[1], E_2)) + \
+            min(area_seg(E[1], E[2], E_1), area_seg(E[1], E[2], E_2)) + min(area_seg(E[2], E[3], E_1), area_seg(E[2], E[3], E_2)) \
+                + min(area_seg(E[3], E[0], E_1), area_seg(E[3], E[0], E_2)) + \
+                    abs(E[0][0]*E[1][1] + E[1][0]*E[2][1] + E[2][0]*E[3][1] + E[3][0]*E[0][1] - E[1][0]*E[0][1] - \
+                        E[2][0]*E[1][1] - E[3][0]*E[2][1] - E[0][0]*E[3][1]) / 2
+    return Result
+
+root = tk.Tk()
+root.geometry("950x420")
+root.title("Algorithms for Area of Intersection between two Ellipses")
+
+def resultpacking():
+################((str result))    
+    a1 = float(entryA_1.get())
+    b1 = float(entryB_1.get())
+    x1 = float(entrymx_1.get())
+    y1 = float(entrymy_1.get())
+    theta1 = float(entryφ_1.get())
+    a2 = float(entryA_2.get())
+    b2 = float(entryB_2.get())
+    x2 = float(entrymx_2.get())
+    y2 = float(entrymy_2.get())
+    theta2 = float(entryφ_2.get())
+    
+    frame_res = tk.Frame(root, relief = 'solid', bd = 2)
+    frame_res.place(x = 720, y = 80, width = 200, height = 120)
+    frame_res.propagate(0)
+
+    cbc_res = tk.Label(frame_res, text = "")
+    cbc_res.pack(side = 'top')
+    mc_res = tk.Label(frame_res, text = "")
+    mc_res.pack(side = 'top')
+
+    cbcresult = area(a1, b1, x1, y1, theta1, a2, b2, x2, y2, theta2)
+    
+    cbc_res.config(text="Case by Case\n" + str(cbcresult) + "\n\n")
+
+    monresult = area_of_overlap_without_plot(a1, b1, x1, y1, theta1, a2, b2, x2, y2, theta2, num_samples=1000)
+    
+    mc_res.config(text="Monte Carlo\n" + str(monresult))
+
+    label_res = tk.Label(root, text = "Result")
+    label_res.place(x = 795, y = 50)
+
+    ################((graph result))################
+
+    fig, ax = plt.subplots(figsize = (5, 5), facecolor = '#ececec')
+
+    # 첫번째 타원 생성
+    ellipse1 = Ellipse(xy=(float(x1), float(y1)), width=float(a1)*2, height=float(b1)*2, angle=float(theta1))
+    ellipse1.set_alpha(0.2) # 타원 내부의 투명도 = 0.2로 설정
+    ellipse1.set_facecolor('green')
+    ellipse1.set_edgecolor('green')
+    ellipse1.set_linewidth(0.5)
+    ax.add_patch(ellipse1) # 생성된 타원을 그래프에 add
+
+    # 두번째 타원 생성
+    ellipse2 = Ellipse(xy=(float(x2), float(y2)), width=float(a2)*2, height=float(b2)*2, angle=float(theta2))
+    ellipse2.set_alpha(0.2) # 타원 내부의 투명도 = 0.2로 설정
+    ellipse2.set_facecolor('green')
+    ellipse2.set_edgecolor('green')
+    ellipse2.set_linewidth(0.5)
+    ax.add_patch(ellipse2) # 생성된 타원을 그래프에 add
+
+    plt.axis('auto')              # 자동으로 생성된 두 타원이 모두 그려지도록 x축과 y축의 범위 결정
+    plt.gca().set_aspect('equal')
+    plt.xticks(fontsize=7.5)
+    plt.yticks(fontsize=7.5)
+    ax.spines['top'].set_linewidth(0.5)
+    ax.spines['left'].set_linewidth(0.5)
+    ax.spines['right'].set_linewidth(0.5)
+    ax.spines['bottom'].set_linewidth(0.5)
+
+    canvas = FigureCanvasTkAgg(fig, master = frame_pic)
+    canvas.draw()
+    canvas.get_tk_widget().pack(anchor = 'nw')
+
+################((restart function))
+
+def restart_program():
+    python = sys.executable
+    os.execl(python, python, * sys.argv)
+
+
+frame_pic = tk.Frame(root)
+frame_pic.place(x = 240, y = -60)
+
+frame_E1 = tk.Frame(root, padx = 5)
+frame_E1.grid(row = 0, column = 0, sticky = "n")
+
+frame_E2 = tk.Frame(root, padx = 5)
+frame_E2.grid(row = 1, column = 0, sticky = "n")
+
+frame_button = tk.Frame(root, padx = 5)
+frame_button.grid(row = 2, column = 0)
+
+label_E1 = tk.Label(frame_E1, text = "타원 1")
+label_E1.grid(column = 0, row = 0 , columnspan = 2)
+label_E2 = tk.Label(frame_E2, text = "타원 2")
+label_E2.grid(column = 0, row = 0 , columnspan = 2)
+
+components = ["A", "B", "mx", "my", "φ"]
+
+labelA_1 = tk.Label(frame_E1, text = components[0])
+labelA_1.grid(row = 1, column = 0)
+labelA_2 = tk.Label(frame_E2, text = components[0])
+labelA_2.grid(row = 1, column = 0)
+    
+entryA_1 = tk.Entry(frame_E1)
+entryA_1.grid(row = 1, column = 1)
+entryA_2 = tk.Entry(frame_E2)
+entryA_2.grid(row = 1, column = 1)
+
+labelB_1 = tk.Label(frame_E1, text = components[1])
+labelB_1.grid(row = 2, column = 0)
+labelB_2 = tk.Label(frame_E2, text = components[1])
+labelB_2.grid(row = 2, column = 0)
+
+entryB_1 = tk.Entry(frame_E1)
+entryB_1.grid(row = 2, column = 1)
+entryB_2 = tk.Entry(frame_E2)
+entryB_2.grid(row = 2, column = 1)
+
+labelmx_1 = tk.Label(frame_E1, text = components[2])
+labelmx_1.grid(row = 3, column = 0)
+labelmx_2 = tk.Label(frame_E2, text = components[2])
+labelmx_2.grid(row = 3, column = 0)
+    
+entrymx_1 = tk.Entry(frame_E1)
+entrymx_1.grid(row = 3, column = 1)
+entrymx_2 = tk.Entry(frame_E2)
+entrymx_2.grid(row = 3, column = 1)
+
+labelmy_1 = tk.Label(frame_E1, text = components[3])
+labelmy_1.grid(row = 4, column = 0)
+labelmy_2 = tk.Label(frame_E2, text = components[3])
+labelmy_2.grid(row = 4, column = 0)
+    
+entrymy_1 = tk.Entry(frame_E1)
+entrymy_1.grid(row = 4, column = 1)
+entrymy_2 = tk.Entry(frame_E2)
+entrymy_2.grid(row = 4, column = 1)
+
+labelφ_1 = tk.Label(frame_E1, text = components[4])
+labelφ_1.grid(row = 5, column = 0)
+labelφ_2 = tk.Label(frame_E2, text = components[4])
+labelφ_2.grid(row = 5, column = 0)
+    
+entryφ_1 = tk.Entry(frame_E1)
+entryφ_1.grid(row = 5, column = 1)
+entryφ_2 = tk.Entry(frame_E2)
+entryφ_2.grid(row = 5, column = 1)
+
+cal_but = tk.Button(frame_button, text = "calculate", width = 4, command = resultpacking)
+cal_but.grid(row = 0, column = 0)
+ret_but = tk.Button(frame_button, text = "reset", width = 4, command=restart_program)
+ret_but.grid(row = 0, column = 1)
+
+
+
+
+################
+
+
+root.mainloop()
